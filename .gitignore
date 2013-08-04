@@ -1,0 +1,6 @@
+*.sublime-project
+*.sublime-workspace
+*.o
+*.exe
+bin/*
+test/test_sdl
