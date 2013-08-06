@@ -128,7 +128,7 @@ static int filter_run_current_r(filter_data* data, int x) {
 }
 
 static int filter_run(filter_instance* filter, filter_channel* channel, int64_t input) {
-	input <<= 12;
+	input <<= FIX_P - 13;
 	int64_t output = fix_mul(filter->a1, input);
 	output += fix_mul(filter->a2, channel->in1);
 	output += fix_mul(filter->a3, channel->in2);
@@ -138,7 +138,7 @@ static int filter_run(filter_instance* filter, filter_channel* channel, int64_t 
 	channel->in1 = input;
 	channel->out2 = channel->out1;
 	channel->out1 = output;
-	return output >> 12;
+	return output >> FIX_P - 13;
 }
 
 static void update_lopass(filter_instance* f, int sample_rate, int64_t freq, int64_t res) {
@@ -174,7 +174,7 @@ static void update_current(nocta_unit* self) {
 	filter_data* data = self->data;
 	
 	// resonance is between sqrt(2) (lowest) and 0.1 (highest)
-	int64_t res = (255 - data->res) << 19;
+	int64_t res = (255 - data->res) << FIX_P-8;
 	res = fix_mul(res, FIX_SQRT2 - NUM_PASSES*FIX_1/6);
 	res += NUM_PASSES * FIX_1/6;
 	

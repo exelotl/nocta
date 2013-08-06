@@ -15,10 +15,10 @@ void mix(void* userdata, uint8_t* stream, int len) {
 	memset(stream, 0, len);
 	
 	int remaining = wav_len - wav_pos;
-	if (remaining == 0) return;
+	if (remaining == 0) wav_pos = 0;
 	if (remaining < len) len = remaining;
 	
-	SDL_MixAudio(stream, &(wav_data[wav_pos]), len, SDL_MIX_MAXVOLUME/2);
+	SDL_MixAudio(stream, &(wav_data[wav_pos]), len, SDL_MIX_MAXVOLUME);
 	nocta_unit_process(gainer, (int16_t*) stream, len/2);
 	wav_pos += len;
 }
@@ -56,7 +56,7 @@ void close_gui();
 bool update_gui();
 
 
-int main() {
+int main(int argc, char* argv[]) {
 	
 	SDL_Init(SDL_INIT_EVERYTHING);
 		
@@ -85,11 +85,8 @@ int main() {
 	
 	init_gui();
 	
-	bool running = true;
-	
-	while (wav_pos < wav_len && running) {
+	while (update_gui()) {
 		SDL_Delay(50);
-		running = update_gui();
 	}
 	
 	close_gui();
@@ -107,7 +104,7 @@ void init_gui() {
 
 	gui_params[0] = (param) { "vol", get_gainer_vol, set_gainer_vol, 0, 127 };
 	gui_params[1] = (param) { "pan", get_gainer_pan, set_gainer_pan, -128, 127 };
-	gui_params[2] = (param) { "mode", get_filter_mode, set_filter_mode, 0, NOCTA_FILTER_NUM_MODES };
+	gui_params[2] = (param) { "mode", get_filter_mode, set_filter_mode, 0, NOCTA_FILTER_NUM_MODES-1 };
 	gui_params[3] = (param) { "freq", get_filter_freq, set_filter_freq, 100, 22050 };
 	gui_params[4] = (param) { "res", get_filter_res, set_filter_res, 0, 255 };	
 }
