@@ -2,5 +2,6 @@
 *.sublime-workspace
 *.o
 *.exe
+*.lib
 bin/*
 test/test_sdl

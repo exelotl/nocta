@@ -103,12 +103,12 @@ void init_gui() {
 		SDL_WINDOWPOS_UNDEFINED,
 		SDL_WINDOWPOS_UNDEFINED,
 		300, 400, SDL_WINDOW_SHOWN);
-	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
 
 	gui_params[0] = (param) { "vol", get_gainer_vol, set_gainer_vol, 0, 127 };
 	gui_params[1] = (param) { "pan", get_gainer_pan, set_gainer_pan, -128, 127 };
 	gui_params[2] = (param) { "mode", get_filter_mode, set_filter_mode, 0, NOCTA_FILTER_NUM_MODES };
-	gui_params[3] = (param) { "freq", get_filter_freq, set_filter_freq, 10, 22050 };
+	gui_params[3] = (param) { "freq", get_filter_freq, set_filter_freq, 100, 22050 };
 	gui_params[4] = (param) { "res", get_filter_res, set_filter_res, 0, 255 };	
 }
 
