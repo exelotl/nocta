@@ -8,9 +8,10 @@
 #define NOCTA_MAX_SOURCES 16
 
 enum {
-	NOCTA_FILTER_LOPASS,
-	NOCTA_FILTER_HIPASS,
+	NOCTA_FILTER_LOWPASS,
+	NOCTA_FILTER_HIGHPASS,
 	NOCTA_FILTER_BANDPASS,
+	NOCTA_FILTER_NOTCH,
 	
 	NOCTA_FILTER_NUM_MODES
 };
@@ -18,6 +19,7 @@ enum {
 
 typedef struct nocta_engine {
 	int sample_rate;
+	int time_scale;
 } nocta_engine;
 
 /**
@@ -56,18 +58,41 @@ int8_t  nocta_gainer_pan(nocta_unit* self);
 void    nocta_gainer_set_vol(nocta_unit* self, uint8_t vol);
 void    nocta_gainer_set_pan(nocta_unit* self, int8_t pan);
 
-void     nocta_filter_init(nocta_unit* self);
-uint8_t  nocta_filter_vol(nocta_unit* self);
-int      nocta_filter_mode(nocta_unit* self);
-uint16_t nocta_filter_freq(nocta_unit* self);
-uint8_t  nocta_filter_res(nocta_unit* self);
-void     nocta_filter_set_vol(nocta_unit* self, uint8_t vol);
-void     nocta_filter_set_mode(nocta_unit* self, int mode);
-void     nocta_filter_set_freq(nocta_unit* self, uint16_t freq);
-void     nocta_filter_set_res(nocta_unit* self, uint8_t res);
+// Biquad Filter:
+// better stability than the state variable filter
+// can be used at any sample rate
+// cutoff frequency ranges from 100 to 22050 Hz
+void    nocta_bqfilter_init(nocta_unit* self);
+uint8_t nocta_bqfilter_vol(nocta_unit* self);
+int     nocta_bqfilter_mode(nocta_unit* self);
+int     nocta_bqfilter_freq(nocta_unit* self);
+uint8_t nocta_bqfilter_res(nocta_unit* self);
+void    nocta_bqfilter_set_vol(nocta_unit* self, uint8_t vol);
+void    nocta_bqfilter_set_mode(nocta_unit* self, int mode);
+void    nocta_bqfilter_set_freq(nocta_unit* self, int freq);
+void    nocta_bqfilter_set_res(nocta_unit* self, uint8_t res);
+
+// State Variable Filter:
+// cleaner, more pleasant sound than the biquad
+// becomes unstable at 1/3 of the sample-rate
+// cutoff frequency is capped at 10000 Hz
+void    nocta_svfilter_init(nocta_unit* self);
+uint8_t nocta_svfilter_vol(nocta_unit* self);
+int     nocta_svfilter_mode(nocta_unit* self);
+int     nocta_svfilter_freq(nocta_unit* self);
+uint8_t nocta_svfilter_res(nocta_unit* self);
+void    nocta_svfilter_set_vol(nocta_unit* self, uint8_t vol);
+void    nocta_svfilter_set_mode(nocta_unit* self, int mode);
+void    nocta_svfilter_set_freq(nocta_unit* self, int freq);
+void    nocta_svfilter_set_res(nocta_unit* self, uint8_t res);
+
+// Delay/echo:
+void    nocta_delay_init(nocta_unit* self);
+uint8_t nocta_delay_mix(nocta_unit* self);
+uint8_t nocta_delay_feedback(nocta_unit* self);
+int     nocta_delay_time(nocta_unit* self);
+void    nocta_delay_set_mix(nocta_unit* self, uint8_t mix);
+void    nocta_delay_set_feedback(nocta_unit* self, uint8_t feedback);
+void    nocta_delay_set_time(nocta_unit* self, int time);
 
 //void nocta_generator_init(nocta_unit* self);
-
-void nocta_process_gainer(nocta_unit* self, int16_t* buffer, size_t length);
-void nocta_process_filter(nocta_unit* self, int16_t* buffer, size_t length);
-

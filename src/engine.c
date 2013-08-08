@@ -8,7 +8,8 @@ nocta_engine* nocta_engine_new(int sample_rate) {
 
 void nocta_engine_init(nocta_engine* self, int sample_rate) {
 	*self = (nocta_engine) {
-		.sample_rate = sample_rate
+		.sample_rate = sample_rate,
+		.time_scale = (44100*16) / sample_rate
 	};
 }
 

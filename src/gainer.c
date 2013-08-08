@@ -5,9 +5,11 @@ typedef struct {
 	int8_t pan;
 } gainer_data;
 
+static void gainer_process(nocta_unit* self, int16_t* buffer, size_t length);
+
 void nocta_gainer_init(nocta_unit* self) {
 	self->name = "gainer";
-	self->process = nocta_process_gainer;
+	self->process = gainer_process;
 	
 	gainer_data* data = malloc(sizeof(gainer_data));
 	*data = (gainer_data) {
@@ -17,10 +19,12 @@ void nocta_gainer_init(nocta_unit* self) {
 	self->data = data;
 }
 
-void nocta_process_gainer(nocta_unit* self, int16_t* buffer, size_t length) {
+static void gainer_process(nocta_unit* self, int16_t* buffer, size_t length) {
 	gainer_data* data = self->data;
-	int amount_l = (127 - data->pan);
-	int amount_r = (256 - amount_l);
+	int amount_l = 255, amount_r = 255;
+	
+	if (data->pan < 0) amount_r += 2*data->pan;
+	if (data->pan > 0) amount_l -= 2*data->pan;
 	amount_l = (amount_l * data->vol) >> 8;
 	amount_r = (amount_r * data->vol) >> 8;
 	

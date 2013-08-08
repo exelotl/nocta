@@ -18,7 +18,7 @@ void mix(void* userdata, uint8_t* stream, int len) {
 	if (remaining == 0) wav_pos = 0;
 	if (remaining < len) len = remaining;
 	
-	SDL_MixAudio(stream, &(wav_data[wav_pos]), len, SDL_MIX_MAXVOLUME);
+	SDL_MixAudio(stream, &(wav_data[wav_pos]), len, SDL_MIX_MAXVOLUME/2);
 	nocta_unit_process(gainer, (int16_t*) stream, len/2);
 	wav_pos += len;
 }
@@ -36,25 +36,20 @@ param gui_params[5];
 SDL_Window* window;
 SDL_Renderer* renderer;
 
-int get_gainer_vol() { return nocta_gainer_vol(gainer); }
-void set_gainer_vol(int val) { nocta_gainer_set_vol(gainer, val); }
-
-int get_gainer_pan() { return nocta_gainer_pan(gainer); }
-void set_gainer_pan(int val) { nocta_gainer_set_pan(gainer, val); }
-
-int get_filter_mode() { return nocta_filter_mode(filter); }
-void set_filter_mode(int val) { nocta_filter_set_mode(filter, val); }
-
-int get_filter_freq() { return nocta_filter_freq(filter); }
-void set_filter_freq(int val) { nocta_filter_set_freq(filter, val); }
-
-int get_filter_res() { return nocta_filter_res(filter); }
-void set_filter_res(int val) { nocta_filter_set_res(filter, val); }
-
 void init_gui();
 void close_gui();
 bool update_gui();
 
+int get_gainer_vol() { return nocta_gainer_vol(gainer); }
+int get_gainer_pan() { return nocta_gainer_pan(gainer); }
+int get_filter_mode() { return nocta_svfilter_mode(filter); }
+int get_filter_freq() { return nocta_svfilter_freq(filter); }
+int get_filter_res() { return nocta_svfilter_res(filter); }
+void set_gainer_vol(int val) { nocta_gainer_set_vol(gainer, val); }
+void set_gainer_pan(int val) { nocta_gainer_set_pan(gainer, val); }
+void set_filter_mode(int val) { nocta_svfilter_set_mode(filter, val); }
+void set_filter_freq(int val) { nocta_svfilter_set_freq(filter, val); }
+void set_filter_res(int val) { nocta_svfilter_set_res(filter, val); }
 
 int main(int argc, char* argv[]) {
 	
@@ -78,15 +73,15 @@ int main(int argc, char* argv[]) {
 	gainer = nocta_unit_new(engine);
 	nocta_gainer_init(gainer); 
 	filter = nocta_unit_new(engine);
-	nocta_filter_init(filter);
+	nocta_svfilter_init(filter);
 	nocta_unit_add(gainer, filter);
-	nocta_filter_set_freq(filter, 1000);
-	nocta_filter_set_res(filter, 100);
+	nocta_svfilter_set_freq(filter, 1000);
+	nocta_svfilter_set_res(filter, 100);
 	
 	init_gui();
 	
 	while (update_gui()) {
-		SDL_Delay(50);
+		SDL_Delay(20);
 	}
 	
 	close_gui();
@@ -104,8 +99,8 @@ void init_gui() {
 
 	gui_params[0] = (param) { "vol", get_gainer_vol, set_gainer_vol, 0, 127 };
 	gui_params[1] = (param) { "pan", get_gainer_pan, set_gainer_pan, -128, 127 };
-	gui_params[2] = (param) { "mode", get_filter_mode, set_filter_mode, 0, NOCTA_FILTER_NUM_MODES-1 };
-	gui_params[3] = (param) { "freq", get_filter_freq, set_filter_freq, 100, 22050 };
+	gui_params[2] = (param) { "mode", get_filter_mode, set_filter_mode, 0, NOCTA_FILTER_NUM_MODES};
+	gui_params[3] = (param) { "freq", get_filter_freq, set_filter_freq, 0, 10000 };
 	gui_params[4] = (param) { "res", get_filter_res, set_filter_res, 0, 255 };	
 }
 
