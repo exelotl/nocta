@@ -2,7 +2,7 @@ NAME=libnocta.a
 CC=gcc
 CFLAGS=-std=gnu99 -g
 VPATH=src
-SOURCES=engine.c unit.c gainer.c bqfilter.c svfilter.c
+SOURCES=engine.c unit.c gainer.c bqfilter.c svfilter.c delay.c
 OBJECTS=$(SOURCES:.c=.o)
 
 all: $(NAME)

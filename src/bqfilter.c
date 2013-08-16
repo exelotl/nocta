@@ -171,7 +171,7 @@ int nocta_bqfilter_mode(nocta_unit* self) {
 void nocta_bqfilter_set_mode(nocta_unit* self, int mode) {
 	filter_data* data = self->data;
 	
-	if (mode < 0 || mode >= NOCTA_FILTER_NUM_MODES)
+	if (mode < 0 || mode >= NOCTA_NUM_FILTER_MODES)
 		mode = NOCTA_FILTER_LOWPASS;
 	data->mode = mode;
 	update_coefficients(self);

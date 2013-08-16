@@ -31,14 +31,9 @@ static void gainer_process(nocta_unit* self, int16_t* buffer, size_t length) {
 	int16_t* sample = buffer;
 	
 	for (int i=length/2; i>0; i--) {
-		int val = *sample;
-		val = (val * amount_l) >> 7;
-		*sample = (int16_t) val;
+		*sample = ((int)(*sample) * amount_l) >> 7;
 		sample++;
-		
-		val = *sample;
-		val = (val * amount_r) >> 7;
-		*sample = (int16_t) val;
+		*sample = ((int)(*sample) * amount_r) >> 7;
 		sample++;
 	}
 }

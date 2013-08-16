@@ -108,7 +108,7 @@ void nocta_svfilter_set_mode(nocta_unit* self, int mode) {
 	filter_state* l = &data->l;
 	filter_state* r = &data->r;
 	
-	if (mode < 0 || mode >= NOCTA_FILTER_NUM_MODES)
+	if (mode < 0 || mode >= NOCTA_NUM_FILTER_MODES)
 		mode = NOCTA_FILTER_LOWPASS;
 	data->mode = mode;
 	

@@ -11,13 +11,15 @@ void nocta_unit_init(nocta_unit* self, nocta_engine* engine) {
 		.name = "unit",
 		.engine = engine,
 		.process = NULL,
+		.free = NULL,
 		.num_sources = 0,
 		.data = NULL
 	};
 }
 
 void nocta_unit_free(nocta_unit* self) {
-	if (self->data) free(self->data);
+	if (self->free) self->free(self); // custom free routine
+	if (self->data) free(self->data); // custom data
 	free(self);
 }
 
