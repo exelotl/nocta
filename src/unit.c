@@ -68,3 +68,20 @@ void nocta_unit_source_each(nocta_unit* self, nocta_unit_iterator iterator) {
 	}
 }
 
+int nocta_unit_get(nocta_unit* self, int param_id) {
+	if (param_id >= self->num_params)
+		return 0;
+	nocta_param* param = &self->params[param_id];
+	return param->get(self);
+}
+
+void nocta_unit_set(nocta_unit* self, int param_id, int val) {
+	if (param_id >= self->num_params)
+		return;
+	nocta_param* param = &self->params[param_id];
+	param->set(self, val);
+}
+
+nocta_param* nocta_unit_get_param(nocta_unit* self, int param_id) {
+	return param_id < self->num_params ? &self->params[param_id] : NULL;
+}

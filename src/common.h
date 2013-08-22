@@ -1,12 +1,13 @@
 #pragma once
 #include "../include/nocta.h"
 #include "fixedpoint.h"
+#include "minipack.h"
 
-#define MAX(A,B) ((A)>(B) ? (A) : (B))
-#define MIN(A,B) ((A)<(B) ? (A) : (B))
+#define MAX(a,b) ((a)>(b) ? (a) : (b))
+#define MIN(a,b) ((a)<(b) ? (a) : (b))
 
-// keep N within the range MIN..MAX
-#define CLAMP(N,MIN,MAX) ((N)<(MIN)?(MIN):((N)>(MAX)?(MAX):(N)))
+// keep n within the range min..max
+#define CLAMP(n,min,max) ((n)<(min)?(min):((n)>(max)?(max):(n)))
 
 
 inline static int clip(int x) {

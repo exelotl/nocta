@@ -13,7 +13,7 @@ void nocta_engine_init(nocta_engine* self, int sample_rate) {
 	*self = (nocta_engine) {
 		.sample_rate = sample_rate,
 		.tempo = 120,
-		.ticks_per_line = 6,
+		.ticks_per_line = 12,
 		.samples_per_tick = samples_per_line(sample_rate, 120) / 6
 	};
 }

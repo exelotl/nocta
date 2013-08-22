@@ -5,6 +5,22 @@
 
 // http://www.musicdsp.org/files/Audio-EQ-Cookbook.txt
 
+static int get_vol(nocta_unit* self);
+static int get_mode(nocta_unit* self);
+static int get_freq(nocta_unit* self);
+static int get_res(nocta_unit* self);
+static void set_vol(nocta_unit* self, int vol);
+static void set_mode(nocta_unit* self, int mode);
+static void set_freq(nocta_unit* self, int freq);
+static void set_res(nocta_unit* self, int res);
+
+static nocta_param bqfilter_params[] = {
+	{"volume", 0, 255, get_vol, set_vol},
+	{"mode", 0, NOCTA_FILTER_NUM_MODES, get_mode, set_mode},
+	{"frequency", 100, 22050, get_freq, set_freq},
+	{"resoncance", 0, 255, get_res, set_res}
+};
+
 #define NUM_PASSES 2
 
 typedef struct {
@@ -13,14 +29,18 @@ typedef struct {
 } filter_state;
 
 typedef struct {
+	// properties:
 	uint8_t vol;
 	int mode;
 	int freq;
 	int amp;
 	uint8_t res;
-	filter_state l[NUM_PASSES], r[NUM_PASSES];
+	
+	// coefficients:
 	int a0, a1, a2;
 	int b0, b1, b2;
+	
+	filter_state l[NUM_PASSES], r[NUM_PASSES];
 } filter_data;
 
 // process a block of samples
@@ -37,11 +57,13 @@ static int bqfilter_run(filter_data* data, filter_state* state, int input);
 void nocta_bqfilter_init(nocta_unit* self) {
 	self->name = "filter";
 	self->process = bqfilter_process;
+	self->params = bqfilter_params;
+	self->num_params = NOCTA_FILTER_NUM_PARAMS;
 	
 	filter_data* data = malloc(sizeof(filter_data));
 	*data = (filter_data) {
 		.vol = 255,
-		.mode = NOCTA_FILTER_LOWPASS,
+		.mode = NOCTA_FILTER_MODE_LOWPASS,
 		.freq = 22050,
 		.res = 0
 	};
@@ -107,7 +129,7 @@ static void update_coefficients(nocta_unit* self) {
 	int alpha = fix_div(sin_w0, res);
 	
 	switch (data->mode) {
-		case NOCTA_FILTER_LOWPASS:
+		case NOCTA_FILTER_MODE_LOWPASS:
 			data->amp = 200;
 			data->b0 = (FIX_1 - cos_w0) / 2;
 			data->b1 = FIX_1 - cos_w0;
@@ -116,7 +138,7 @@ static void update_coefficients(nocta_unit* self) {
 			data->a1 = -2 * cos_w0;
 			data->a2 = FIX_1 - alpha;
 			break;
-		case NOCTA_FILTER_HIGHPASS:
+		case NOCTA_FILTER_MODE_HIGHPASS:
 			data->amp = 200 + (data->freq >> 5);
 			data->b0 = (FIX_1 + cos_w0) / 2;
 			data->b1 = -(FIX_1 + cos_w0);
@@ -125,7 +147,7 @@ static void update_coefficients(nocta_unit* self) {
 			data->a1 = -2 * cos_w0;
 			data->a2 = FIX_1 - alpha;
 			break;
-		case NOCTA_FILTER_BANDPASS:
+		case NOCTA_FILTER_MODE_BANDPASS:
 			data->amp = 255 + (data->freq >> 5);
 			data->b0 = sin_w0/2;
 			data->b1 = 0;
@@ -134,7 +156,7 @@ static void update_coefficients(nocta_unit* self) {
 			data->a1 = -2 * cos_w0;
 			data->a2 = FIX_1 - alpha;
 			break;
-		case NOCTA_FILTER_NOTCH:
+		case NOCTA_FILTER_MODE_NOTCH:
 			data->amp = 200;
 			data->b0 = FIX_1;
 			data->b1 = -2 * cos_w0;
@@ -155,43 +177,40 @@ static void update_coefficients(nocta_unit* self) {
 
 // getters and setters:
 
-uint8_t nocta_bqfilter_vol(nocta_unit* self) {
+static int get_vol(nocta_unit* self) {
 	filter_data* data = self->data;
 	return data->vol;
 }
-void nocta_bqfilter_set_vol(nocta_unit* self, uint8_t vol) {
+static void set_vol(nocta_unit* self, int vol) {
 	filter_data* data = self->data;
 	data->vol = vol;
 }
 
-int nocta_bqfilter_mode(nocta_unit* self) {
+static int get_mode(nocta_unit* self) {
 	filter_data* data = self->data;
 	return data->mode;
 }
-void nocta_bqfilter_set_mode(nocta_unit* self, int mode) {
+static void set_mode(nocta_unit* self, int mode) {
 	filter_data* data = self->data;
-	
-	if (mode < 0 || mode >= NOCTA_NUM_FILTER_MODES)
-		mode = NOCTA_FILTER_LOWPASS;
 	data->mode = mode;
 	update_coefficients(self);
 }
 
-int nocta_bqfilter_freq(nocta_unit* self) {
+static int get_freq(nocta_unit* self) {
 	filter_data* data = self->data;
 	return data->freq;
 }
-void nocta_bqfilter_set_freq(nocta_unit* self, int freq) {
+static void set_freq(nocta_unit* self, int freq) {
 	filter_data* data = self->data;
-	data->freq = CLAMP(freq, 100, 22050);
+	data->freq = freq;
 	update_coefficients(self);
 }
 
-uint8_t nocta_bqfilter_res(nocta_unit* self) {
+static int get_res(nocta_unit* self) {
 	filter_data* data = self->data;
 	return data->res;
 }
-void nocta_bqfilter_set_res(nocta_unit* self, uint8_t res) {
+static void set_res(nocta_unit* self, int res) {
 	filter_data* data = self->data;
 	data->res = res;
 	update_coefficients(self);

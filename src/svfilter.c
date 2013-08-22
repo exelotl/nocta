@@ -1,4 +1,5 @@
 #include "common.h"
+
 /*
 //Input/Output
     I - input sample
@@ -23,6 +24,22 @@
     N = H + L
 */
 
+static int get_vol(nocta_unit* self);
+static int get_mode(nocta_unit* self);
+static int get_freq(nocta_unit* self);
+static int get_res(nocta_unit* self);
+static void set_vol(nocta_unit* self, int vol);
+static void set_mode(nocta_unit* self, int mode);
+static void set_freq(nocta_unit* self, int freq);
+static void set_res(nocta_unit* self, int res);
+
+static nocta_param svfilter_params[] = {
+	{"volume", 0, 255, get_vol, set_vol},
+	{"mode", 0, NOCTA_FILTER_NUM_MODES, get_mode, set_mode},
+	{"frequency", 0, 10000, get_freq, set_freq},
+	{"resoncance", 0, 255, get_res, set_res}
+};
+
 typedef struct {
 	int lp, hp, bp, n;
 	int* out;
@@ -45,6 +62,8 @@ static void svfilter_process(nocta_unit* self, int16_t* buffer, size_t length);
 void nocta_svfilter_init(nocta_unit* self) {
 	self->name = "filter";
 	self->process = svfilter_process;
+	self->params = svfilter_params;
+	self->num_params = NOCTA_FILTER_NUM_PARAMS;
 	
 	filter_data* data = malloc(sizeof(filter_data));
 	*data = (filter_data) {
@@ -53,7 +72,7 @@ void nocta_svfilter_init(nocta_unit* self) {
 		.res = 0,
 	};
 	self->data = data;
-	nocta_svfilter_set_mode(self, NOCTA_FILTER_LOWPASS);
+	set_mode(self, NOCTA_FILTER_MODE_LOWPASS);
 }
 
 static void svfilter_process(nocta_unit* self, int16_t* buffer, size_t length) {
@@ -90,65 +109,60 @@ static int svfilter_run(filter_data* data, filter_state* s, int input) {
 
 // getters and setters:
 
-uint8_t nocta_svfilter_vol(nocta_unit* self) {
+int get_vol(nocta_unit* self) {
 	filter_data* data = self->data;
 	return data->vol;
 }
-void nocta_svfilter_set_vol(nocta_unit* self, uint8_t vol) {
+void set_vol(nocta_unit* self, int vol) {
 	filter_data* data = self->data;
 	data->vol = vol;
 }
 
-int nocta_svfilter_mode(nocta_unit* self) {
+int get_mode(nocta_unit* self) {
 	filter_data* data = self->data;
 	return data->mode;
 }
-void nocta_svfilter_set_mode(nocta_unit* self, int mode) {
+void set_mode(nocta_unit* self, int mode) {
 	filter_data* data = self->data;
 	filter_state* l = &data->l;
 	filter_state* r = &data->r;
-	
-	if (mode < 0 || mode >= NOCTA_NUM_FILTER_MODES)
-		mode = NOCTA_FILTER_LOWPASS;
 	data->mode = mode;
 	
 	switch (mode) {
-		case NOCTA_FILTER_LOWPASS:
+		case NOCTA_FILTER_MODE_LOWPASS:
 			l->out = &l->lp;
 			r->out = &r->lp;
 			break;
-		case NOCTA_FILTER_HIGHPASS:
+		case NOCTA_FILTER_MODE_HIGHPASS:
 			l->out = &l->hp;
 			r->out = &r->hp;
 			break;
-		case NOCTA_FILTER_BANDPASS:
+		case NOCTA_FILTER_MODE_BANDPASS:
 			l->out = &l->bp;
 			r->out = &r->bp;
 			break;
-		case NOCTA_FILTER_NOTCH:
+		case NOCTA_FILTER_MODE_NOTCH:
 			l->out = &l->n;
 			r->out = &r->n;
 			break;
 	}
 }
 
-int nocta_svfilter_freq(nocta_unit* self) {
+int get_freq(nocta_unit* self) {
 	filter_data* data = self->data;
 	return data->freq;
 }
-void nocta_svfilter_set_freq(nocta_unit* self, int freq) {
+void set_freq(nocta_unit* self, int freq) {
 	filter_data* data = self->data;
-	freq = CLAMP(freq, 0, 10000);
 	data->freq = freq;
-	
 	data->tuned_freq = 2 * fix_sin(FIX_PI * freq / (self->engine->sample_rate*2));
 }
 
-uint8_t nocta_svfilter_res(nocta_unit* self) {
+int get_res(nocta_unit* self) {
 	filter_data* data = self->data;
 	return data->res;
 }
-void nocta_svfilter_set_res(nocta_unit* self, uint8_t res) {
+void set_res(nocta_unit* self, int res) {
 	filter_data* data = self->data;
 	data->res = res;
 	

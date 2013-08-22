@@ -3,6 +3,22 @@
 // max delay time in seconds:
 #define MAX_TIME 4
 
+int get_dry(nocta_unit* self);
+void set_dry(nocta_unit* self, int dry);
+int get_wet(nocta_unit* self);
+void set_wet(nocta_unit* self, int wet);
+int get_feedback(nocta_unit* self);
+void set_feedback(nocta_unit* self, int feedback);
+int get_time(nocta_unit* self);
+void set_time(nocta_unit* self, int t);
+
+static nocta_param delay_params[] = {
+	{"dry", 0, 255, get_dry, set_dry},
+	{"wet", 0, 255, get_wet, set_wet},
+	{"feedback", 0, 255, get_feedback, set_feedback},
+	{"time", 0, 255, get_time, set_time}
+};
+
 typedef struct {
 	int16_t* samples;
 	int size;
@@ -25,6 +41,8 @@ void nocta_delay_init(nocta_unit* self) {
 	self->name = "delay";
 	self->process = delay_process;
 	self->free = delay_free;
+	self->params = delay_params;
+	self->num_params = NOCTA_DELAY_NUM_PARAMS;
 	
 	int sample_rate = self->engine->sample_rate;
 	
@@ -41,7 +59,7 @@ void nocta_delay_init(nocta_unit* self) {
 	data->r.samples = malloc(sizeof(int16_t) * data->r.size);
 	self->data = data;
 	
-	nocta_delay_set_time(self, 127);
+	set_time(self, 127);
 }
 
 static void delay_free(nocta_unit* self) {
@@ -57,12 +75,10 @@ static void delay_process(nocta_unit* self, int16_t* buffer, size_t len) {
 	
 	for (int i=len/2; i>0; i--) {
 		int val = *sample;
-		//val = (val * amount_l) >> 7;
 		*sample = delay_run(data, &data->l, val);
 		sample++;
 		
 		val = *sample;
-		//val = (val * amount_r) >> 7;
 		*sample = delay_run(data, &data->r, val);
 		sample++;
 	}
@@ -96,38 +112,38 @@ static inline int delay_run(delay_data* data, delay_buffer* b, int x) {
 
 // getters and setters:
 
-uint8_t nocta_delay_dry(nocta_unit* self) {
+int get_dry(nocta_unit* self) {
 	delay_data* data = self->data;
 	return data->dry;
 }
-void nocta_delay_set_dry(nocta_unit* self, uint8_t dry) {
+void set_dry(nocta_unit* self, int dry) {
 	delay_data* data = self->data;
 	data->dry = dry;
 }
 
-uint8_t nocta_delay_wet(nocta_unit* self) {
+int get_wet(nocta_unit* self) {
 	delay_data* data = self->data;
 	return data->wet;
 }
-void nocta_delay_set_wet(nocta_unit* self, uint8_t wet) {
+void set_wet(nocta_unit* self, int wet) {
 	delay_data* data = self->data;
 	data->wet = wet;
 }
 
-uint8_t nocta_delay_feedback(nocta_unit* self) {
+int get_feedback(nocta_unit* self) {
 	delay_data* data = self->data;
 	return data->feedback;
 }
-void nocta_delay_set_feedback(nocta_unit* self, uint8_t feedback) {
+void set_feedback(nocta_unit* self, int feedback) {
 	delay_data* data = self->data;
 	data->feedback = feedback;
 }
 
-int nocta_delay_time(nocta_unit* self) {
+int get_time(nocta_unit* self) {
 	delay_data* data = self->data;
 	return data->delay_time;
 }
-void nocta_delay_set_time(nocta_unit* self, int t) {
+void set_time(nocta_unit* self, int t) {
 	delay_data* data = self->data;
 	data->delay_time = CLAMP(t, 1, MAX_TIME*256 - 1);
 }

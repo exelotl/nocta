@@ -28,35 +28,17 @@ void mix(void* userdata, uint8_t* stream, int len) {
 
 typedef struct {
 	char* name;
-	int (*get)();
-	void (*set)(int val);
-	int min, max;
-} param;
+	nocta_unit* unit;
+	int param_id;
+} gui_param;
 
-param gui_params[8];
+gui_param gui_params[8];
 SDL_Window* window;
 SDL_Renderer* renderer;
 
 void init_gui();
 void close_gui();
 bool update_gui();
-
-int get_gainer_vol() { return nocta_gainer_vol(gainer); }
-int get_gainer_pan() { return nocta_gainer_pan(gainer); }
-int get_filter_mode() { return nocta_svfilter_mode(filter); }
-int get_filter_freq() { return nocta_svfilter_freq(filter); }
-int get_filter_res() { return nocta_svfilter_res(filter); }
-int get_delay_wet() { return nocta_delay_wet(delay); }
-int get_delay_feed() { return nocta_delay_feedback(delay); }
-int get_delay_time() { return nocta_delay_time(delay); }
-void set_gainer_vol(int val) { nocta_gainer_set_vol(gainer, val); }
-void set_gainer_pan(int val) { nocta_gainer_set_pan(gainer, val); }
-void set_filter_mode(int val) { nocta_svfilter_set_mode(filter, val); }
-void set_filter_freq(int val) { nocta_svfilter_set_freq(filter, val); }
-void set_filter_res(int val) { nocta_svfilter_set_res(filter, val); }
-void set_delay_wet(int val) { nocta_delay_set_wet(delay, val); }
-void set_delay_feed(int val) { nocta_delay_set_feedback(delay, val); }
-void set_delay_time(int val) { nocta_delay_set_time(delay, val); }
 
 int main(int argc, char* argv[]) {
 	
@@ -82,8 +64,8 @@ int main(int argc, char* argv[]) {
 	filter = nocta_unit_new(engine);
 	nocta_svfilter_init(filter);
 	nocta_unit_add(gainer, filter);
-	nocta_svfilter_set_freq(filter, 1000);
-	nocta_svfilter_set_res(filter, 100);
+	nocta_unit_set(filter, NOCTA_FILTER_FREQ, 1000);
+	nocta_unit_set(filter, NOCTA_FILTER_RES, 100);
 	
 	delay = nocta_unit_new(engine);
 	nocta_delay_init(delay);
@@ -108,14 +90,14 @@ void init_gui() {
 		300, 600, SDL_WINDOW_SHOWN);
 	renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
 
-	gui_params[0] = (param) { "vol", get_gainer_vol, set_gainer_vol, 0, 127 };
-	gui_params[1] = (param) { "pan", get_gainer_pan, set_gainer_pan, -128, 127 };
-	gui_params[2] = (param) { "mode", get_filter_mode, set_filter_mode, 0, NOCTA_FILTER_NUM_MODES};
-	gui_params[3] = (param) { "freq", get_filter_freq, set_filter_freq, 0, 10000 };
-	gui_params[4] = (param) { "res", get_filter_res, set_filter_res, 0, 255 };
-	gui_params[5] = (param) { "delay_wet", get_delay_wet, set_delay_wet, 0, 255 };
-	gui_params[6] = (param) { "delay_feed", get_delay_feed, set_delay_feed, 0, 255 };
-	gui_params[7] = (param) { "delay_time", get_delay_time, set_delay_time, 0, 255*4 };
+	gui_params[0] = (gui_param) { "volume",         gainer, NOCTA_GAINER_VOL };
+	gui_params[1] = (gui_param) { "panning",        gainer, NOCTA_GAINER_PAN };
+	gui_params[2] = (gui_param) { "filter_mode",    filter, NOCTA_FILTER_MODE };
+	gui_params[3] = (gui_param) { "filter_freq",    filter, NOCTA_FILTER_FREQ };
+	gui_params[4] = (gui_param) { "filter_res",     filter, NOCTA_FILTER_RES };
+	gui_params[5] = (gui_param) { "delay_wet",      delay,  NOCTA_DELAY_WET };
+	gui_params[6] = (gui_param) { "delay_feedback", delay,  NOCTA_DELAY_FEEDBACK };
+	gui_params[7] = (gui_param) { "delay_time",     delay,  NOCTA_DELAY_TIME };
 }
 
 void close_gui() {
@@ -149,16 +131,20 @@ bool update_gui() {
 	SDL_RenderClear(renderer);
 	
 	for (int i=0; i<8; i++) {
+		int param_id = gui_params[i].param_id;
+		nocta_unit* unit = gui_params[i].unit;
+		nocta_param* param = nocta_unit_get_param(unit, param_id);
+		
 		if (mouse_down && mouse_y > i*44 && mouse_y < i*44+44) {
 			double val = mouse_x / 300.0;
-			val *= gui_params[i].max - gui_params[i].min;
-			val += gui_params[i].min;
-			gui_params[i].set(val);
+			val *= param->max - param->min;
+			val += param->min;
+			nocta_unit_set(unit, param_id, val);
 		}
 		
-		double width = gui_params[i].get();
-		width -= gui_params[i].min;
-		width /= gui_params[i].max - gui_params[i].min;
+		double width = nocta_unit_get(unit, param_id);
+		width -= param->min;
+		width /= param->max - param->min;
 		
 		SDL_SetRenderDrawColor(renderer, 30,30,30,255);
 		SDL_RenderFillRect(renderer, &(SDL_Rect){2, i*44+2, 296, 40});

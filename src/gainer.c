@@ -1,5 +1,15 @@
 #include "common.h"
 
+static int get_vol(nocta_unit* self);
+static void set_vol(nocta_unit* self, int vol);
+static int get_pan(nocta_unit* self);
+static void set_pan(nocta_unit* self, int pan);
+
+static nocta_param gainer_params[] = {
+	{"vol",    0, 255, get_vol, set_vol},
+	{"pan", -127, 127, get_pan, set_pan}
+};
+
 typedef struct {
 	uint8_t vol;
 	int8_t pan;
@@ -10,6 +20,8 @@ static void gainer_process(nocta_unit* self, int16_t* buffer, size_t length);
 void nocta_gainer_init(nocta_unit* self) {
 	self->name = "gainer";
 	self->process = gainer_process;
+	self->params = gainer_params;
+	self->num_params = NOCTA_GAINER_NUM_PARAMS;
 	
 	gainer_data* data = malloc(sizeof(gainer_data));
 	*data = (gainer_data) {
@@ -31,9 +43,9 @@ static void gainer_process(nocta_unit* self, int16_t* buffer, size_t length) {
 	int16_t* sample = buffer;
 	
 	for (int i=length/2; i>0; i--) {
-		*sample = ((int)(*sample) * amount_l) >> 7;
+		*sample = clip(((int)(*sample) * amount_l) >> 7);
 		sample++;
-		*sample = ((int)(*sample) * amount_r) >> 7;
+		*sample = clip(((int)(*sample) * amount_r) >> 7);
 		sample++;
 	}
 }
@@ -41,20 +53,20 @@ static void gainer_process(nocta_unit* self, int16_t* buffer, size_t length) {
 
 // getters and setters
 
-uint8_t nocta_gainer_vol(nocta_unit* self) {
+static int get_vol(nocta_unit* self) {
 	gainer_data* data = self->data;
 	return data->vol;
 }
-void nocta_gainer_set_vol(nocta_unit* self, uint8_t vol) {
+static void set_vol(nocta_unit* self, int vol) {
 	gainer_data* data = self->data;
 	data->vol = vol;
 }
 
-int8_t nocta_gainer_pan(nocta_unit* self) {
+static int get_pan(nocta_unit* self) {
 	gainer_data* data = self->data;
 	return data->pan;
 }
-void nocta_gainer_set_pan(nocta_unit* self, int8_t pan) {
+static void set_pan(nocta_unit* self, int pan) {
 	gainer_data* data = self->data;
 	data->pan = pan;
 }
