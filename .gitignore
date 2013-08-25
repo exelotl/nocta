@@ -1,7 +1,9 @@
 *.sublime-project
 *.sublime-workspace
 *.o
+*.a
 *.exe
-*.lib
+*.dll
+*.zip
 bin/*
 test/test_sdl
