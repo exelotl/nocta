@@ -3,38 +3,37 @@
 #include <stdint.h>
 #include <math.h>
 
+// Maximum number of units the engine can reference:
+#define NOCTA_MAX_UNITS 128
+
+// Maximum number of units that can be mixed into another unit:
 #define NOCTA_MAX_SOURCES 16
 
+/** Contains and manages all the sound units */
+struct nocta_engine;
+typedef struct nocta_engine nocta_engine;
+
+/** A sound processing object */
 struct nocta_unit;
-struct nocta_param;
 typedef struct nocta_unit nocta_unit;
+
+/** Defines the getters, setters, minimum and maximum values for a parameter */
+struct nocta_param;
 typedef struct nocta_param nocta_param;
 
-enum {
-	NOCTA_WAVE_SAW,
-	NOCTA_WAVE_SINE,
-	NOCTA_WAVE_SQUARE,
-	NOCTA_WAVE_TRIANGLE,
-	NOCTA_WAVE_NOISE,
-	
-	NOCTA_NUM_WAVES	
-};
+/** Container for serialized data */
+struct nocta_serialized;
+typedef struct nocta_serialized nocta_serialized;
 
-typedef struct {
+struct nocta_engine {
 	int sample_rate;
 	int tempo;
 	int ticks_per_line;
 	int samples_per_tick;
-} nocta_engine;
+	nocta_unit* units;
+	int num_units;
+};
 
-typedef struct {
-	uint8_t* data;
-	size_t size;
-} nocta_serialized;
-
-/**
- * A sound processing object
- */
 struct nocta_unit {
 	nocta_engine* engine;
 	
@@ -42,8 +41,9 @@ struct nocta_unit {
 	char* name;
 	void* data;
 	void (*process)(nocta_unit* self, int16_t* buffer, size_t len);
+	void (*on_tick)(nocta_unit* self);
 	void (*free)(nocta_unit* self);
-	uint8_t* (*serialize)(void* data);
+	nocta_serialized* (*serialize)(void* data);
 	
 	nocta_param* params;
 	int num_params;
@@ -53,7 +53,6 @@ struct nocta_unit {
 	int num_sources;
 };
 
-
 struct nocta_param {
 	char* name;
 	int min, max;
@@ -61,19 +60,23 @@ struct nocta_param {
 	void (*set)(nocta_unit* unit, int val);
 };
 
+struct nocta_serialized {
+	uint8_t* data;
+	size_t size;
+};
+
 
 nocta_engine* nocta_engine_new(int sample_rate);
-void nocta_engine_init(nocta_engine* self, int sample_rate);
+void nocta_engine_run(nocta_engine* self, int16_t* buffer, size_t len);
 void nocta_engine_free(nocta_engine* self);
 
-nocta_unit*  nocta_unit_new(nocta_engine* engine);
-void nocta_unit_init(nocta_unit* self, nocta_engine* engine);
+nocta_unit* nocta_unit_new(nocta_engine* engine);
 void nocta_unit_free(nocta_unit* self);
 void nocta_unit_process(nocta_unit* self, int16_t* buffer, size_t length);
 void nocta_unit_add(nocta_unit* self, nocta_unit* source);
 void nocta_unit_remove(nocta_unit* self, nocta_unit* source);
 bool nocta_unit_has_source(nocta_unit* self, nocta_unit* source);
-int nocta_unit_get(nocta_unit* self, int param_id);
+int  nocta_unit_get(nocta_unit* self, int param_id);
 void nocta_unit_set(nocta_unit* self, int param_id, int val);
 nocta_param* nocta_unit_get_param(nocta_unit* self, int param_id);
 
@@ -81,8 +84,9 @@ nocta_param* nocta_unit_get_param(nocta_unit* self, int param_id);
 typedef bool (*nocta_unit_iterator)(nocta_unit* unit);
 void nocta_unit_source_each(nocta_unit* self, nocta_unit_iterator iterator);
 
+// Output:
+// Created implicitly with each engine, should not be deleted
 void nocta_output_init(nocta_unit* self);
-
 
 // Gainer:
 // amplifies or attenuates a sound signal
@@ -103,7 +107,7 @@ void nocta_bqfilter_init(nocta_unit* self);
 
 // State Variable Filter:
 // cleaner, more pleasant sound than the biquad
-// becomes unstable at 1/3 of the sample-rate
+// becomes unstable at 1/3 of the sample rate
 // cutoff frequency is capped at 10000 Hz
 void nocta_svfilter_init(nocta_unit* self);
 
@@ -139,6 +143,25 @@ void    nocta_osc_init(nocta_unit* self);
 int     nocta_osc_unused_voice(nocta_unit* self);
 void    nocta_osc_note_on(nocta_unit* self, int voice, uint8_t note, uint8_t vol);
 void    nocta_osc_note_off(nocta_unit* self, int voice);
+
+enum {
+	NOCTA_OSC_VOL,
+	NOCTA_OSC_WAVE,
+	NOCTA_OSC_ATTACK,
+	NOCTA_OSC_DECAY,
+	NOCTA_OSC_SUSTAIN,
+	NOCTA_OSC_RELEASE,
+};
+
+enum {
+	NOCTA_WAVE_SAW,
+	NOCTA_WAVE_SINE,
+	NOCTA_WAVE_SQUARE,
+	NOCTA_WAVE_TRIANGLE,
+	NOCTA_WAVE_NOISE,
+	
+	NOCTA_NUM_WAVES	
+};
 
 /*
 // Potential commands:

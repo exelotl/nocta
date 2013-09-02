@@ -11,6 +11,10 @@ nocta_engine* engine;
 nocta_unit* filter;
 nocta_unit* gainer;
 nocta_unit* delay;
+
+int notes[] = {
+	100, 101, 102, 103, 104, 105, 106, 107
+};
 	
 void mix(void* userdata, uint8_t* stream, int len) {
 	memset(stream, 0, len);
@@ -69,7 +73,7 @@ int main(int argc, char* argv[]) {
 	
 	delay = nocta_unit_new(engine);
 	nocta_delay_init(delay);
-	nocta_unit_add(filter, delay);
+	//nocta_unit_add(filter, delay);
 	
 	init_gui();
 	

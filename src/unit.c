@@ -2,11 +2,6 @@
 
 nocta_unit* nocta_unit_new(nocta_engine* engine) {
 	nocta_unit* self = malloc(sizeof(nocta_unit));
-	nocta_unit_init(self, engine);
-	return self;
-}
-
-void nocta_unit_init(nocta_unit* self, nocta_engine* engine) {
 	*self = (nocta_unit) {
 		.name = "unit",
 		.engine = engine,
@@ -15,6 +10,7 @@ void nocta_unit_init(nocta_unit* self, nocta_engine* engine) {
 		.num_sources = 0,
 		.data = NULL
 	};
+	return self;
 }
 
 void nocta_unit_free(nocta_unit* self) {

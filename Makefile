@@ -12,4 +12,4 @@ $(NAME): $(OBJECTS)
 	ar rcs $(NAME) $(OBJECTS)
 
 clean:
-	rm *.o $(NAME)
+	rm -f *.o $(NAME)
