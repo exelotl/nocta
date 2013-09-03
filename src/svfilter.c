@@ -59,11 +59,7 @@ typedef struct {
 static int svfilter_run(filter_data* data, filter_state* state, int input);
 static void svfilter_process(nocta_unit* self, int16_t* buffer, size_t length);
 
-void nocta_svfilter_init(nocta_unit* self) {
-	self->name = "filter";
-	self->process = svfilter_process;
-	self->params = svfilter_params;
-	self->num_params = NOCTA_FILTER_NUM_PARAMS;
+nocta_unit* nocta_svfilter(nocta_context* context) {
 	
 	filter_data* data = malloc(sizeof(filter_data));
 	*data = (filter_data) {
@@ -71,8 +67,16 @@ void nocta_svfilter_init(nocta_unit* self) {
 		.freq = 7000,
 		.res = 0,
 	};
-	self->data = data;
+	
+	nocta_unit* self = nocta_create(context, 
+		.name = "svfilter",
+		.data = data,
+		.process = svfilter_process,
+		.params = svfilter_params,
+		.num_params = NOCTA_FILTER_NUM_PARAMS);
+	
 	set_mode(self, NOCTA_FILTER_MODE_LOWPASS);
+	return self;
 }
 
 static void svfilter_process(nocta_unit* self, int16_t* buffer, size_t length) {
@@ -155,7 +159,7 @@ int get_freq(nocta_unit* self) {
 void set_freq(nocta_unit* self, int freq) {
 	filter_data* data = self->data;
 	data->freq = freq;
-	data->tuned_freq = 2 * fix_sin(FIX_PI * freq / (self->engine->sample_rate*2));
+	data->tuned_freq = 2 * fix_sin(FIX_PI * freq / (self->context->sample_rate*2));
 }
 
 int get_res(nocta_unit* self) {

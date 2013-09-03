@@ -17,18 +17,18 @@ typedef struct {
 
 static void gainer_process(nocta_unit* self, int16_t* buffer, size_t length);
 
-void nocta_gainer_init(nocta_unit* self) {
-	self->name = "gainer";
-	self->process = gainer_process;
-	self->params = gainer_params;
-	self->num_params = NOCTA_GAINER_NUM_PARAMS;
+nocta_unit* nocta_gainer(nocta_context* context) {
 	
 	gainer_data* data = malloc(sizeof(gainer_data));
-	*data = (gainer_data) {
-		.vol = 128,
-		.pan = 0
-	};
-	self->data = data;
+	data->vol = 128;
+	data->pan = 0;
+	
+	return nocta_create(context,
+		.name = "gainer",
+		.data = data,
+		.process = gainer_process,
+		.params = gainer_params,
+		.num_params = NOCTA_GAINER_NUM_PARAMS);
 }
 
 static void gainer_process(nocta_unit* self, int16_t* buffer, size_t length) {

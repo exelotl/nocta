@@ -54,11 +54,7 @@ static int bqfilter_run_l(filter_data* data, int x);
 static int bqfilter_run_r(filter_data* data, int x);
 static int bqfilter_run(filter_data* data, filter_state* state, int input);
 
-void nocta_bqfilter_init(nocta_unit* self) {
-	self->name = "filter";
-	self->process = bqfilter_process;
-	self->params = bqfilter_params;
-	self->num_params = NOCTA_FILTER_NUM_PARAMS;
+nocta_unit* nocta_bqfilter(nocta_context* context) {
 	
 	filter_data* data = malloc(sizeof(filter_data));
 	*data = (filter_data) {
@@ -67,7 +63,13 @@ void nocta_bqfilter_init(nocta_unit* self) {
 		.freq = 22050,
 		.res = 0
 	};
-	self->data = data;
+	
+	return nocta_create(context,
+		.name = "bqfilter",
+		.data = data,
+		.process = bqfilter_process,
+		.params = bqfilter_params,
+		.num_params = NOCTA_FILTER_NUM_PARAMS);
 }
 
 static void bqfilter_process(nocta_unit* self, int16_t* buffer, size_t length) {
@@ -121,7 +123,7 @@ static int bqfilter_run(filter_data* data, filter_state* state, int input) {
 static void update_coefficients(nocta_unit* self) {
 	filter_data* data = self->data;
 	
-	int sample_rate = self->engine->sample_rate;
+	int sample_rate = self->context->sample_rate;
 	int w0 = (2 * FIX_PI * data->freq) / sample_rate;
 	int cos_w0 = fix_cos(w0);
 	int sin_w0 = fix_sin(w0);

@@ -7,7 +7,6 @@
 uint8_t* wav_data;
 uint32_t wav_len, wav_pos;
 
-nocta_engine* engine;
 nocta_unit* filter;
 nocta_unit* gainer;
 nocta_unit* delay;
@@ -24,7 +23,9 @@ void mix(void* userdata, uint8_t* stream, int len) {
 	if (remaining < len) len = remaining;
 	
 	SDL_MixAudio(stream, &(wav_data[wav_pos]), len, SDL_MIX_MAXVOLUME/2);
-	nocta_unit_process(gainer, (int16_t*) stream, len/2);
+	nocta_process(filter, (int16_t*) stream, len/2);
+	nocta_process(delay, (int16_t*) stream, len/2);
+	nocta_process(gainer, (int16_t*) stream, len/2);
 	wav_pos += len;
 }
 
@@ -62,18 +63,16 @@ int main(int argc, char* argv[]) {
 	SDL_LoadWAV("paper_isaac_sacrificial_1337.wav", &wav, &wav_data, &wav_len);
 	SDL_PauseAudio(false);
 	
-	engine = nocta_engine_new(spec.freq);
-	gainer = nocta_unit_new(engine);
-	nocta_gainer_init(gainer); 
-	filter = nocta_unit_new(engine);
-	nocta_svfilter_init(filter);
-	nocta_unit_add(gainer, filter);
-	nocta_unit_set(filter, NOCTA_FILTER_FREQ, 1000);
-	nocta_unit_set(filter, NOCTA_FILTER_RES, 100);
+	nocta_context context = {
+		.sample_rate = spec.freq
+	};
 	
-	delay = nocta_unit_new(engine);
-	nocta_delay_init(delay);
-	//nocta_unit_add(filter, delay);
+	gainer = nocta_gainer(&context);
+	filter = nocta_svfilter(&context);
+	delay = nocta_delay(&context);
+	nocta_set(filter, NOCTA_FILTER_FREQ, 1000);
+	nocta_set(filter, NOCTA_FILTER_RES, 100);
+	
 	
 	init_gui();
 	
@@ -137,16 +136,16 @@ bool update_gui() {
 	for (int i=0; i<8; i++) {
 		int param_id = gui_params[i].param_id;
 		nocta_unit* unit = gui_params[i].unit;
-		nocta_param* param = nocta_unit_get_param(unit, param_id);
+		nocta_param* param = nocta_get_param(unit, param_id);
 		
 		if (mouse_down && mouse_y > i*44 && mouse_y < i*44+44) {
 			double val = mouse_x / 300.0;
 			val *= param->max - param->min;
 			val += param->min;
-			nocta_unit_set(unit, param_id, val);
+			nocta_set(unit, param_id, val);
 		}
 		
-		double width = nocta_unit_get(unit, param_id);
+		double width = nocta_get(unit, param_id);
 		width -= param->min;
 		width /= param->max - param->min;
 		

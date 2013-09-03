@@ -37,29 +37,31 @@ static void delay_process(nocta_unit* self, int16_t* buffer, size_t len);
 static inline int delay_run(delay_data* data, delay_buffer* b, int x);
 static void delay_free(nocta_unit* self);
 
-void nocta_delay_init(nocta_unit* self) {
-	self->name = "delay";
-	self->process = delay_process;
-	self->free = delay_free;
-	self->params = delay_params;
-	self->num_params = NOCTA_DELAY_NUM_PARAMS;
+nocta_unit* nocta_delay(nocta_context* context) {
 	
-	int sample_rate = self->engine->sample_rate;
+	int buffer_size = 2 * MAX_TIME * context->sample_rate;
+	int alloc_size = sizeof(int16_t) * buffer_size;
 	
 	delay_data* data = malloc(sizeof(delay_data));
 	*data = (delay_data) {
 		.dry = 255,
 		.wet = 127,
 		.feedback = 100,
-		.l = (delay_buffer) {.size = 2*MAX_TIME*sample_rate},
-		.r = (delay_buffer) {.size = 2*MAX_TIME*sample_rate},
-		.sample_rate = sample_rate
+		.l = (delay_buffer){ malloc(alloc_size), buffer_size },
+		.r = (delay_buffer){ malloc(alloc_size), buffer_size },
+		.sample_rate = context->sample_rate
 	};
-	data->l.samples = malloc(sizeof(int16_t) * data->l.size);
-	data->r.samples = malloc(sizeof(int16_t) * data->r.size);
-	self->data = data;
+	
+	nocta_unit* self = nocta_create(context, 
+		.name = "delay",
+		.data = data,
+		.process = delay_process,
+		.free = delay_free,
+		.params = delay_params,
+		.num_params = NOCTA_DELAY_NUM_PARAMS);
 	
 	set_time(self, 127);
+	return self;
 }
 
 static void delay_free(nocta_unit* self) {
