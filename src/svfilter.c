@@ -57,7 +57,8 @@ typedef struct {
 
 // get the next sample
 static int svfilter_run(filter_data* data, filter_state* state, int input);
-static void svfilter_process(nocta_unit* self, int16_t* buffer, size_t length);
+static int svfilter_l(nocta_unit* self, int x);
+static int svfilter_r(nocta_unit* self, int x);
 
 nocta_unit* nocta_svfilter(nocta_context* context) {
 	
@@ -71,7 +72,8 @@ nocta_unit* nocta_svfilter(nocta_context* context) {
 	nocta_unit* self = nocta_create(context, 
 		.name = "svfilter",
 		.data = data,
-		.process = svfilter_process,
+		.process_l = svfilter_l,
+		.process_r = svfilter_r,
 		.params = svfilter_params,
 		.num_params = NOCTA_FILTER_NUM_PARAMS);
 	
@@ -79,24 +81,13 @@ nocta_unit* nocta_svfilter(nocta_context* context) {
 	return self;
 }
 
-static void svfilter_process(nocta_unit* self, int16_t* buffer, size_t length) {
+static int svfilter_l(nocta_unit* self, int x) {
 	filter_data* data = self->data;
-	
-	int16_t* sample = buffer;
-	
-	for (int i=length/2; i>0; i--) {
-		int val = *sample;
-		val = (val * data->vol) >> 8;
-		val = svfilter_run(data, &data->l, val);
-		*sample = clip(val);
-		sample++;
-		
-		val = *sample;
-		val = (val * data->vol) >> 8;
-		val = svfilter_run(data, &data->r, val);
-		*sample = clip(val);
-		sample++;
-	}
+	return svfilter_run(data, &data->l, x);
+}
+static int svfilter_r(nocta_unit* self, int x) {
+	filter_data* data = self->data;
+	return svfilter_run(data, &data->r, x);
 }
 
 static int svfilter_run(filter_data* data, filter_state* s, int input) {
@@ -108,7 +99,7 @@ static int svfilter_run(filter_data* data, filter_state* s, int input) {
 		s->n = s->hp + s->lp;
 		output += *s->out / 2;
 	}
-	return output;
+	return (output * data->vol) >> 8;
 }
 
 // getters and setters:

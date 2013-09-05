@@ -33,8 +33,9 @@ typedef struct {
 	int sample_rate;
 } delay_data;
 
-static void delay_process(nocta_unit* self, int16_t* buffer, size_t len);
 static inline int delay_run(delay_data* data, delay_buffer* b, int x);
+static int delay_l(nocta_unit* self, int x);
+static int delay_r(nocta_unit* self, int x);
 static void delay_free(nocta_unit* self);
 
 nocta_unit* nocta_delay(nocta_context* context) {
@@ -55,7 +56,8 @@ nocta_unit* nocta_delay(nocta_context* context) {
 	nocta_unit* self = nocta_create(context, 
 		.name = "delay",
 		.data = data,
-		.process = delay_process,
+		.process_l = delay_l,
+		.process_r = delay_r,
 		.free = delay_free,
 		.params = delay_params,
 		.num_params = NOCTA_DELAY_NUM_PARAMS);
@@ -70,20 +72,14 @@ static void delay_free(nocta_unit* self) {
 	free(data->r.samples);
 }
 
-static void delay_process(nocta_unit* self, int16_t* buffer, size_t len) {
+static int delay_l(nocta_unit* self, int x) {
 	delay_data* data = self->data;
-	
-	int16_t* sample = buffer;
-	
-	for (int i=len/2; i>0; i--) {
-		int val = *sample;
-		*sample = delay_run(data, &data->l, val);
-		sample++;
-		
-		val = *sample;
-		*sample = delay_run(data, &data->r, val);
-		sample++;
-	}
+	return delay_run(data, &data->l, x);
+}
+
+static int delay_r(nocta_unit* self, int x) {
+	delay_data* data = self->data;
+	return delay_run(data, &data->r, x);
 }
 
 /*

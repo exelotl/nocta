@@ -3,24 +3,19 @@
 #include <stdint.h>
 #include <math.h>
 
-// Maximum number of units that can be mixed into another unit:
-#define NOCTA_MAX_SOURCES 16
+// Every sound unit refers to an instance of this
+typedef struct {
+	int sample_rate;
+} nocta_context;
 
-/** Contains and manages all the sound units */
-struct nocta_context;
-typedef struct nocta_context nocta_context;
-
-/** A sound processing object */
+// A sound processing object
 struct nocta_unit;
 typedef struct nocta_unit nocta_unit;
 
-/** Defines the getters, setters, minimum and maximum values for a parameter */
+// Defines the getters, setters, minimum and maximum values for a parameter
 struct nocta_param;
 typedef struct nocta_param nocta_param;
 
-struct nocta_context {
-	int sample_rate;
-};
 
 struct nocta_unit {
 	nocta_context* context;
@@ -28,7 +23,8 @@ struct nocta_unit {
 	// custom data/functions for each type of unit:
 	char* name;
 	void* data;
-	void (*process)(nocta_unit* self, int16_t* buffer, size_t len);
+	int (*process_l)(nocta_unit* self, int l);
+	int (*process_r)(nocta_unit* self, int r);
 	void (*free)(nocta_unit* self);
 	
 	nocta_param* params;
@@ -42,14 +38,25 @@ struct nocta_param {
 	void (*set)(nocta_unit* unit, int val);
 };
 
+// Create a new sound unit
 #define nocta_create(...) nocta_create_impl((nocta_unit) { __VA_ARGS__ })
-nocta_unit*  nocta_create_impl(nocta_unit base);
+nocta_unit* nocta_create_impl(nocta_unit base);
 
-void         nocta_free(nocta_unit* self);
-void         nocta_process(nocta_unit* self, int16_t* buffer, size_t length);
-int          nocta_get(nocta_unit* self, int param_id);
-void         nocta_set(nocta_unit* self, int param_id, int val);
+void nocta_free(nocta_unit* self);
+
+// Process two samples (one in each channel)
+void nocta_process(nocta_unit* self, int16_t* l, int16_t* r);
+
+// Process a block of interleaved stereo samples
+void nocta_process_buffer(nocta_unit* self, int16_t* buffer, size_t length);
+
+// Get/set the value of a parameter
+int nocta_get(nocta_unit* self, int param_id);
+void nocta_set(nocta_unit* self, int param_id, int val);
+
+// Get a parameter's definition
 nocta_param* nocta_get_param(nocta_unit* self, int param_id);
+
 
 // Gainer:
 // amplifies or attenuates a sound signal

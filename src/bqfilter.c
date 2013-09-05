@@ -43,16 +43,13 @@ typedef struct {
 	filter_state l[NUM_PASSES], r[NUM_PASSES];
 } filter_data;
 
-// process a block of samples
-static void bqfilter_process(nocta_unit* self, int16_t* buffer, size_t length);
-
 // calculate the coefficients when frequency, resonance, etc are changed
 static void update_coefficients(nocta_unit* self);
 
 // get the next sample
-static int bqfilter_run_l(filter_data* data, int x);
-static int bqfilter_run_r(filter_data* data, int x);
 static int bqfilter_run(filter_data* data, filter_state* state, int input);
+static int bqfilter_l(nocta_unit* self, int x);
+static int bqfilter_r(nocta_unit* self, int x);
 
 nocta_unit* nocta_bqfilter(nocta_context* context) {
 	
@@ -67,44 +64,27 @@ nocta_unit* nocta_bqfilter(nocta_context* context) {
 	return nocta_create(context,
 		.name = "bqfilter",
 		.data = data,
-		.process = bqfilter_process,
+		.process_l = bqfilter_l,
+		.process_r = bqfilter_r,
 		.params = bqfilter_params,
 		.num_params = NOCTA_FILTER_NUM_PARAMS);
 }
 
-static void bqfilter_process(nocta_unit* self, int16_t* buffer, size_t length) {
+static int bqfilter_l(nocta_unit* self, int x) {
 	filter_data* data = self->data;
-	
-	int16_t* sample = buffer;
-	
-	for (int i=length/2; i>0; i--) {
-		int val = *sample;
-		val = val * data->vol >> 8;
-		val = bqfilter_run_l(data, val);
-		*sample = clip(val);
-		sample++;
-		
-		val = *sample;
-		val = val * data->vol >> 8;
-		val = bqfilter_run_r(data, val);
-		*sample = clip(val);
-		sample++;
-	}
-}
-
-static int bqfilter_run_l(filter_data* data, int x) {
 	x = x*data->amp >> 8;
 	for (int i=0; i<NUM_PASSES; i++) {
 		x = bqfilter_run(data, &data->l[i], x);
 	}
-	return x;
+	return x*data->vol >> 8;
 }
-static int bqfilter_run_r(filter_data* data, int x) {
+static int bqfilter_r(nocta_unit* self, int x) {
+	filter_data* data = self->data;
 	x = x*data->amp >> 8;
 	for (int i=0; i<NUM_PASSES; i++) {
 		x = bqfilter_run(data, &data->r[i], x);
 	}
-	return x;
+	return x*data->vol >> 8;
 }
 
 static int bqfilter_run(filter_data* data, filter_state* state, int input) {

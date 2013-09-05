@@ -4,7 +4,8 @@ nocta_unit* nocta_create_impl(nocta_unit base) {
 	nocta_unit* unit = malloc(sizeof(nocta_unit));
 	*unit = base;
 	assert(unit->context);
-	assert(unit->name);
+	assert(unit->process_l);
+	assert(unit->process_r);
 	return unit;
 }
 
@@ -14,11 +15,19 @@ void nocta_free(nocta_unit* unit) {
 	free(unit);
 }
 
-void nocta_process(nocta_unit* unit, int16_t* buffer, size_t length) {
-	if (unit->process)
-		unit->process(unit, buffer, length);
+void nocta_process(nocta_unit* unit, int16_t* l, int16_t* r) {
+	*l = clip(unit->process_l(unit, *l));
+	*r = clip(unit->process_r(unit, *r));
 }
 
+void nocta_process_buffer(nocta_unit* unit, int16_t* buffer, size_t length) {
+	for (int i=0; i<length/2; i++) {
+		*buffer = clip(unit->process_l(unit, *buffer));
+		buffer++;
+		*buffer = clip(unit->process_r(unit, *buffer));
+		buffer++;
+	}
+}
 
 int nocta_get(nocta_unit* unit, int param_id) {
 	if (param_id >= unit->num_params)

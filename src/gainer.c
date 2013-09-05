@@ -15,7 +15,8 @@ typedef struct {
 	int8_t pan;
 } gainer_data;
 
-static void gainer_process(nocta_unit* self, int16_t* buffer, size_t length);
+static int gainer_process_l(nocta_unit* self, int in);
+static int gainer_process_r(nocta_unit* self, int in);
 
 nocta_unit* nocta_gainer(nocta_context* context) {
 	
@@ -26,28 +27,27 @@ nocta_unit* nocta_gainer(nocta_context* context) {
 	return nocta_create(context,
 		.name = "gainer",
 		.data = data,
-		.process = gainer_process,
+		.process_l = gainer_process_l,
+		.process_r = gainer_process_r,
 		.params = gainer_params,
 		.num_params = NOCTA_GAINER_NUM_PARAMS);
 }
 
-static void gainer_process(nocta_unit* self, int16_t* buffer, size_t length) {
+
+static int gainer_process_l(nocta_unit* self, int in) {
 	gainer_data* data = self->data;
-	int amount_l = 255, amount_r = 255;
-	
-	if (data->pan < 0) amount_r += 2*data->pan;
-	if (data->pan > 0) amount_l -= 2*data->pan;
-	amount_l = (amount_l * data->vol) >> 8;
-	amount_r = (amount_r * data->vol) >> 8;
-	
-	int16_t* sample = buffer;
-	
-	for (int i=length/2; i>0; i--) {
-		*sample = clip(((int)(*sample) * amount_l) >> 7);
-		sample++;
-		*sample = clip(((int)(*sample) * amount_r) >> 7);
-		sample++;
-	}
+	int amp = 255;
+	if (data->pan > 0) amp -= 2 * data->pan;
+	amp = amp * data->vol >> 8;
+	return in * amp >> 7;
+}
+
+static int gainer_process_r(nocta_unit* self, int in) {
+	gainer_data* data = self->data;
+	int amp = 255;
+	if (data->pan < 0) amp += 2 * data->pan;
+	amp = amp * data->vol >> 8;
+	return in * amp >> 7;
 }
 
 

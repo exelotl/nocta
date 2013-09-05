@@ -10,22 +10,21 @@ uint32_t wav_len, wav_pos;
 nocta_unit* filter;
 nocta_unit* gainer;
 nocta_unit* delay;
-
-int notes[] = {
-	100, 101, 102, 103, 104, 105, 106, 107
-};
 	
-void mix(void* userdata, uint8_t* stream, int len) {
-	memset(stream, 0, len);
+void mix(void* userdata, uint8_t* bytes, int len) {
+	memset(bytes, 0, len);
 	
 	int remaining = wav_len - wav_pos;
 	if (remaining == 0) wav_pos = 0;
 	if (remaining < len) len = remaining;
 	
-	SDL_MixAudio(stream, &(wav_data[wav_pos]), len, SDL_MIX_MAXVOLUME/2);
-	nocta_process(filter, (int16_t*) stream, len/2);
-	nocta_process(delay, (int16_t*) stream, len/2);
-	nocta_process(gainer, (int16_t*) stream, len/2);
+	uint16_t* buffer = (int16_t*) bytes;
+	int num_samples = len/2;
+	
+	SDL_MixAudio(bytes, &(wav_data[wav_pos]), len, SDL_MIX_MAXVOLUME/2);
+	nocta_process_buffer(filter, buffer, num_samples);
+	nocta_process_buffer(delay, buffer, num_samples);
+	nocta_process_buffer(gainer, buffer, num_samples);
 	wav_pos += len;
 }
 
