@@ -16,7 +16,7 @@ static void set_res(nocta_unit* self, int res);
 
 static nocta_param bqfilter_params[] = {
 	{"volume", 0, 255, get_vol, set_vol},
-	{"mode", 0, NOCTA_FILTER_NUM_MODES, get_mode, set_mode},
+	{"mode", 0, NOCTA_FILTER_NUM_MODES-1, get_mode, set_mode},
 	{"frequency", 100, 22050, get_freq, set_freq},
 	{"resoncance", 0, 255, get_res, set_res}
 };
@@ -53,21 +53,22 @@ static int bqfilter_r(nocta_unit* self, int x);
 
 nocta_unit* nocta_bqfilter(nocta_context* context) {
 	
-	filter_data* data = malloc(sizeof(filter_data));
-	*data = (filter_data) {
-		.vol = 255,
-		.mode = NOCTA_FILTER_MODE_LOWPASS,
-		.freq = 22050,
-		.res = 0
-	};
-	
-	return nocta_create(context,
+	nocta_unit* self = nocta_create(
+		.context = context,
 		.name = "bqfilter",
-		.data = data,
+		.data = ialloc(filter_data,
+			.vol = 255,
+			.freq = 22050,
+			.res = 0
+		),
 		.process_l = bqfilter_l,
 		.process_r = bqfilter_r,
 		.params = bqfilter_params,
-		.num_params = NOCTA_FILTER_NUM_PARAMS);
+		.num_params = NOCTA_FILTER_NUM_PARAMS
+	);
+	
+	set_mode(self, NOCTA_FILTER_MODE_LOWPASS);
+	return self;
 }
 
 static int bqfilter_l(nocta_unit* self, int x) {

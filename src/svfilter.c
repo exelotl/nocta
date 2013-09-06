@@ -35,7 +35,7 @@ static void set_res(nocta_unit* self, int res);
 
 static nocta_param svfilter_params[] = {
 	{"volume", 0, 255, get_vol, set_vol},
-	{"mode", 0, NOCTA_FILTER_NUM_MODES, get_mode, set_mode},
+	{"mode", 0, NOCTA_FILTER_NUM_MODES-1, get_mode, set_mode},
 	{"frequency", 0, 10000, get_freq, set_freq},
 	{"resoncance", 0, 255, get_res, set_res}
 };
@@ -62,16 +62,14 @@ static int svfilter_r(nocta_unit* self, int x);
 
 nocta_unit* nocta_svfilter(nocta_context* context) {
 	
-	filter_data* data = malloc(sizeof(filter_data));
-	*data = (filter_data) {
-		.vol = 255,
-		.freq = 7000,
-		.res = 0,
-	};
-	
-	nocta_unit* self = nocta_create(context, 
+	nocta_unit* self = nocta_create(
+		.context = context, 
 		.name = "svfilter",
-		.data = data,
+		.data = ialloc(filter_data,
+			.vol = 255,
+			.freq = 7000,
+			.res = 0
+		),
 		.process_l = svfilter_l,
 		.process_r = svfilter_r,
 		.params = svfilter_params,

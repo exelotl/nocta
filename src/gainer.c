@@ -20,17 +20,18 @@ static int gainer_process_r(nocta_unit* self, int in);
 
 nocta_unit* nocta_gainer(nocta_context* context) {
 	
-	gainer_data* data = malloc(sizeof(gainer_data));
-	data->vol = 128;
-	data->pan = 0;
-	
-	return nocta_create(context,
+	return nocta_create(
+		.context = context,
 		.name = "gainer",
-		.data = data,
+		.data = ialloc(gainer_data,
+			.vol = 128,
+			.pan = 0
+		),
 		.process_l = gainer_process_l,
 		.process_r = gainer_process_r,
 		.params = gainer_params,
-		.num_params = NOCTA_GAINER_NUM_PARAMS);
+		.num_params = NOCTA_GAINER_NUM_PARAMS
+	);
 }
 
 

@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <math.h>
+#include <string.h>
 
 // Every sound unit refers to an instance of this
 typedef struct {
@@ -109,12 +110,29 @@ enum {
 	NOCTA_DELAY_NUM_PARAMS
 };
 
+
+// WIP STUFF:
+
 nocta_unit* nocta_osc(nocta_context* context);
-void nocta_osc_on(nocta_unit* osc, uint8_t note);
+void nocta_osc_on(nocta_unit* osc);
 void nocta_osc_off(nocta_unit* osc);
+
 enum {
 	NOCTA_OSC_VOL,
-	NOCTA_OSC_WAVE
+	NOCTA_OSC_FREQ,
+	NOCTA_OSC_WAVE,
+	NOCTA_OSC_NUM_PARAMS
+};
+
+
+nocta_unit* nocta_lfo(nocta_context* context);
+void nocta_lfo_trigger(nocta_unit* lfo);
+
+enum {
+	NOCTA_LFO_AMOUNT,
+	NOCTA_LFO_FREQ,
+	NOCTA_LFO_WAVE,
+	NOCTA_LFO_NUM_PARAMS
 };
 
 enum {
@@ -125,4 +143,18 @@ enum {
 	NOCTA_WAVE_NOISE,
 	
 	NOCTA_NUM_WAVES	
+};
+
+
+nocta_unit* nocta_env(nocta_context* context);
+void nocta_env_trigger(nocta_unit* env);
+
+enum {
+	NOCTA_ENV_AMOUNT,
+	NOCTA_ENV_ATTACK,	
+	NOCTA_ENV_DECAY,	
+	NOCTA_ENV_SUSTAIN,	
+	NOCTA_ENV_RELEASE,
+	
+	NOCTA_ENV_NUM_PARAMS	
 };
