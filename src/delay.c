@@ -20,9 +20,10 @@ static nocta_param delay_params[] = {
 };
 
 typedef struct {
-	int16_t* samples;
+	int16_t* pre_samples; // initial delay
+	int16_t* samples;     // feedback delay
 	int size;
-	int i, j;
+	int i, j;             // i = current position, j = future position
 } delay_buffer;
 
 typedef struct {
@@ -43,15 +44,14 @@ nocta_unit* nocta_delay(nocta_context* context) {
 	int buffer_size = 2 * MAX_TIME * context->sample_rate;
 	int alloc_size = sizeof(int16_t) * buffer_size;
 	
-	delay_data* data = malloc(sizeof(delay_data));
-	*data = (delay_data) {
+	delay_data* data = ialloc(delay_data,
 		.dry = 255,
 		.wet = 127,
 		.feedback = 100,
-		.l = (delay_buffer){ malloc(alloc_size), buffer_size },
-		.r = (delay_buffer){ malloc(alloc_size), buffer_size },
+		.l = (delay_buffer){ malloc(alloc_size), malloc(alloc_size), buffer_size },
+		.r = (delay_buffer){ malloc(alloc_size), malloc(alloc_size), buffer_size },
 		.sample_rate = context->sample_rate
-	};
+	);
 	
 	nocta_unit* self = nocta_create(context, 
 		.name = "delay",
@@ -82,29 +82,21 @@ static int delay_r(nocta_unit* self, int x) {
 	return delay_run(data, &data->r, x);
 }
 
-/*
-if( i >= BufferSize )
-    i = 0;
-
-j = i - (fDlyTime * MaxDlyTime);
-
-if( j < 0 )
-    j += BufferSize;
-
-Output = DlyBuffer[ i ] = Input + (DlyBuffer[ j ] * fFeedback);
-
-i++;
-*/
-
-static inline int delay_run(delay_data* data, delay_buffer* b, int x) {
+static inline int delay_run(delay_data* data, delay_buffer* b, int in) {
 	if (b->i >= b->size) b->i = 0;
 	b->j = b->i - (data->delay_time * data->sample_rate >> 8);
 	if (b->j < 0) b->j += b->size;
 	
-	x += data->feedback * b->samples[b->j] >> 8;
-	b->samples[b->i] = x;
+	b->pre_samples[b->i] = in;
+	
+	int out = b->pre_samples[b->j];
+	out += data->feedback * b->samples[b->j] >> 8;
+	
+	b->samples[b->i] = out;
 	b->i++;
-	return x;
+	
+	return (in * data->dry >> 8)
+	     + (out * data->wet >> 8);
 }
 
 
