@@ -68,7 +68,9 @@ nocta_unit* nocta_delay(nocta_context* context) {
 
 static void delay_free(nocta_unit* self) {
 	delay_data* data = self->data;
+	free(data->l.pre_samples);
 	free(data->l.samples);
+	free(data->r.pre_samples);
 	free(data->r.samples);
 }
 

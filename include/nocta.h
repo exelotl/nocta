@@ -1,3 +1,4 @@
+#pragma once
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -47,6 +48,9 @@ void nocta_free(nocta_unit* self);
 
 // Process two samples (one in each channel)
 void nocta_process(nocta_unit* self, int16_t* l, int16_t* r);
+
+// Process one sample in only the left channel
+void nocta_process_mono(nocta_unit* self, int16_t* l);
 
 // Process a block of interleaved stereo samples
 void nocta_process_buffer(nocta_unit* self, int16_t* buffer, size_t length);
@@ -118,6 +122,7 @@ void nocta_osc_on(nocta_unit* osc);
 void nocta_osc_off(nocta_unit* osc);
 
 enum {
+	NOCTA_OSC_ACTIVE,
 	NOCTA_OSC_VOL,
 	NOCTA_OSC_FREQ,
 	NOCTA_OSC_WAVE,

@@ -20,6 +20,10 @@ void nocta_process(nocta_unit* unit, int16_t* l, int16_t* r) {
 	*r = clip(unit->process_r(unit, *r));
 }
 
+void nocta_process_mono(nocta_unit* unit, int16_t* l) {
+	*l = clip(unit->process_l(unit, *l));
+}
+
 void nocta_process_buffer(nocta_unit* unit, int16_t* buffer, size_t length) {
 	for (int i=0; i<length/2; i++) {
 		*buffer = clip(unit->process_l(unit, *buffer));
